@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1e3a5f">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Achilles Rehab Tracker</title>
+  <style>
+    :root {
+      --primary: #1e3a5f;
+      --accent: #2b6cb0;
+      --bg: #f7fafc;
+      --card: #ffffff;
+      --success: #38a169;
+      --warning: #d69e2e;
+      --danger: #e53e3e;
+      --text: #2d3748;
+      --muted: #718096;
+      --border: #e2e8f0;
+      --tennis: #805ad5;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 12px;
+      max-width: 640px;
+      margin: 0 auto;
+      min-height: 100vh;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    h1 { font-size: 1.3rem; color: var(--primary); margin-bottom: 2px; }
+    .subtitle { font-size: 0.8rem; color: var(--muted); }
+
+    .phase-badge {
+      display: inline-block;
+      background: var(--accent);
+      color: white;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 3px 12px;
+      border-radius: 999px;
+      margin-top: 8px;
+      cursor: pointer;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 14px;
+      background: var(--border);
+      border-radius: 10px;
+      padding: 3px;
+    }
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 10px 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--muted);
+      border: none;
+      background: transparent;
+    }
+    .tab.active {
+      background: var(--card);
+      color: var(--primary);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .view { display: none; }
+    .view.active { display: block; }
+
+    .card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 14px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      border: 1px solid var(--border);
+    }
+
+    .card h2 {
+      font-size: 0.95rem;
+      color: var(--primary);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Date navigation */
+    .date-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .date-nav button, .cal-nav button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      width: 40px;
+      height: 40px;
+      font-size: 1.3rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .date-nav button:disabled { background: #a0aec0; cursor: not-allowed; }
+    .date-display { flex: 1; text-align: center; font-weight: 600; font-size: 1.05rem; }
+    .date-display .day-name { font-size: 0.8rem; color: var(--muted); font-weight: 400; }
+
+    /* Tennis toggle */
+    .tennis-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #faf5ff;
+      border: 1px solid #d6bcfa;
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .tennis-toggle.active {
+      background: #805ad5;
+      border-color: #6b46c1;
+      color: white;
+    }
+    .tennis-toggle .label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tennis-toggle .switch {
+      width: 44px;
+      height: 24px;
+      background: #cbd5e0;
+      border-radius: 999px;
+      position: relative;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .tennis-toggle.active .switch { background: #c4b5fd; }
+    .tennis-toggle .switch::after {
+      content: "";
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      background: white;
+      border-radius: 50%;
+      top: 3px;
+      left: 3px;
+      transition: transform 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .tennis-toggle.active .switch::after { transform: translateX(20px); }
+
+    /* Exercises */
+    .exercise {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+      background: #fafbfc;
+      transition: opacity 0.2s;
+    }
+    .exercise.done { background: #f0fff4; border-color: #9ae6b4; }
+    .exercise.skipped {
+      opacity: 0.55;
+      background: #f7fafc;
+      border-style: dashed;
+    }
+    .exercise-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+    .exercise-title { font-weight: 600; font-size: 0.95rem; }
+    .exercise-phase { font-size: 0.7rem; color: var(--muted); background: #edf2f7; padding: 1px 6px; border-radius: 4px; }
+    .exercise-params { font-size: 0.8rem; color: var(--muted); margin-bottom: 8px; }
+    .skip-note {
+      font-size: 0.78rem;
+      color: var(--tennis);
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+    .check-row { display: flex; align-items: center; gap: 10px; }
+    .check-row label { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.9rem; flex: 1; }
+    input[type="checkbox"] { width: 22px; height: 22px; accent-color: var(--success); cursor: pointer; }
+    .notes-input {
+      width: 100%; margin-top: 8px; padding: 8px 10px;
+      border: 1px solid var(--border); border-radius: 6px;
+      font-size: 0.85rem; resize: vertical; min-height: 36px; font-family: inherit;
+    }
+    .notes-input:focus { outline: none; border-color: var(--accent); }
+
+    /* Calendar */
+    .cal-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .cal-month-label { font-weight: 700; font-size: 1.1rem; color: var(--primary); }
+
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+    }
+    .cal-dow {
+      text-align: center;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--muted);
+      padding: 4px 0;
+    }
+    .cal-day {
+      aspect-ratio: 1;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      cursor: pointer;
+      position: relative;
+      border: 1px solid transparent;
+      background: transparent;
+      padding: 2px;
+    }
+    .cal-day.empty { cursor: default; }
+    .cal-day.today { border-color: var(--accent); font-weight: 700; }
+    .cal-day.selected { background: var(--accent); color: white; }
+    .cal-day.has-full { background: #c6f6d5; color: #276749; }
+    .cal-day.has-partial { background: #feebc8; color: #9c4221; }
+    .cal-day.selected.has-full,
+    .cal-day.selected.has-partial { background: var(--accent); color: white; }
+
+    .cal-icons {
+      display: flex;
+      gap: 2px;
+      margin-top: 1px;
+      min-height: 6px;
+    }
+    .cal-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+    }
+    .cal-day.has-full .cal-dot { background: #276749; }
+    .cal-day.has-partial .cal-dot { background: #c05621; }
+    .cal-day.selected .cal-dot { background: white; }
+
+    .cal-tennis {
+      font-size: 0.55rem;
+      line-height: 1;
+    }
+    .cal-day.selected .cal-tennis { filter: brightness(2); }
+
+    .cal-legend {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 12px;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    .cal-legend span { display: flex; align-items: center; gap: 4px; }
+    .leg-box {
+      width: 12px; height: 12px; border-radius: 3px;
+    }
+    .leg-full { background: #c6f6d5; }
+    .leg-partial { background: #feebc8; }
+    .leg-today { border: 2px solid var(--accent); background: transparent; }
+    .leg-tennis { color: var(--tennis); font-size: 0.9rem; }
+
+    /* Stats */
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .stat-box { background: #edf2f7; border-radius: 8px; padding: 12px; text-align: center; }
+    .stat-value { font-size: 1.4rem; font-weight: 700; color: var(--primary); }
+    .stat-label { font-size: 0.72rem; color: var(--muted); }
+
+    /* History */
+    .history-list { max-height: 260px; overflow-y: auto; }
+    .history-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem;
+    }
+    .history-item:last-child { border-bottom: none; }
+    .badge {
+      display: inline-block; padding: 2px 8px; border-radius: 999px;
+      font-size: 0.75rem; font-weight: 600;
+    }
+    .badge-done { background: #c6f6d5; color: #276749; }
+    .badge-partial { background: #feebc8; color: #9c4221; }
+    .badge-none { background: #fed7d7; color: #9b2c2c; }
+    .badge-tennis { background: #e9d8fd; color: #553c9a; margin-left: 4px; }
+
+    .btn-row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+    .btn {
+      flex: 1; min-width: 110px; padding: 11px 12px;
+      border: none; border-radius: 8px; font-size: 0.88rem;
+      font-weight: 600; cursor: pointer; text-align: center;
+    }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-secondary { background: #edf2f7; color: var(--text); }
+    .btn-danger { background: #fff5f5; color: var(--danger); border: 1px solid #feb2b2; }
+
+    .rules {
+      font-size: 0.78rem; color: var(--muted);
+      background: #fffaf0; border: 1px solid #fbd38d;
+      border-radius: 8px; padding: 10px 12px; margin-bottom: 14px;
+    }
+    .rules strong { color: #9c4221; }
+    .rules ul { margin: 4px 0 0 16px; }
+
+    .empty-state { text-align: center; color: var(--muted); padding: 18px; font-size: 0.9rem; }
+
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: var(--primary); color: white; padding: 10px 20px;
+      border-radius: 8px; font-size: 0.9rem; opacity: 0;
+      transition: opacity 0.3s; pointer-events: none; z-index: 100;
+      max-width: 90%;
+    }
+    .toast.show { opacity: 1; }
+
+    footer {
+      text-align: center; font-size: 0.72rem; color: var(--muted);
+      margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--border);
+    }
+
+    /* Dark mode */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1a202c; --card: #2d3748; --text: #e2e8f0;
+        --muted: #a0aec0; --border: #4a5568;
+        --primary: #90cdf4; --accent: #63b3ed;
+        --tennis: #b794f4;
+      }
+      .exercise { background: #2d3748; }
+      .exercise.done { background: #276749; border-color: #48bb78; }
+      .exercise.skipped { background: #2d3748; }
+      .stat-box { background: #4a5568; }
+      .rules { background: #2d3748; border-color: #d69e2e; }
+      .btn-secondary { background: #4a5568; color: var(--text); }
+      .exercise-phase { background: #4a5568; }
+      .tabs { background: #4a5568; }
+      .tab.active { background: #2d3748; }
+      .cal-day.has-full { background: #276749; color: #c6f6d5; }
+      .cal-day.has-partial { background: #9c4221; color: #feebc8; }
+      .tennis-toggle { background: #322659; border-color: #6b46c1; }
+      .tennis-toggle.active { background: #6b46c1; }
+      .badge-tennis { background: #553c9a; color: #e9d8fd; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Achilles Tendinopathy Rehab</h1>
+    <p class="subtitle">Chronic Mid-Portion · 6-Month Timeline</p>
+    <span class="phase-badge" id="currentPhaseLabel" title="Tap to switch phase">Phase 1</span>
+  </header>
+
+  <div class="rules">
+    <strong>Core Rules</strong>
+    <ul>
+      <li><strong>No Deficit Drops:</strong> Keep entire foot flat. Never let heel drop below toes.</li>
+      <li><strong>24-Hour Rule:</strong> If heel is stiffer/more painful next morning → reduce load by half.</li>
+    </ul>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" data-view="day">Day Log</button>
+    <button class="tab" data-view="calendar">Month View</button>
+    <button class="tab" data-view="stats">Stats</button>
+  </div>
+
+  <!-- ========== DAY VIEW ========== -->
+  <div class="view active" id="view-day">
+    <div class="card">
+      <div class="date-nav">
+        <button id="prevDay" aria-label="Previous day">‹</button>
+        <div class="date-display">
+          <div id="dateLabel">Today</div>
+          <div class="day-name" id="dayName"></div>
+        </div>
+        <button id="nextDay" aria-label="Next day">›</button>
+      </div>
+
+      <!-- Tennis Day Toggle -->
+      <div class="tennis-toggle" id="tennisToggle">
+        <div class="label">
+          <span>🎾</span>
+          <span>Tennis Day</span>
+        </div>
+        <div class="switch"></div>
+      </div>
+
+      <div id="exerciseList"></div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="markAllBtn">Mark All Done</button>
+        <button class="btn btn-secondary" id="clearDayBtn">Clear Day</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== CALENDAR VIEW ========== -->
+  <div class="view" id="view-calendar">
+    <div class="card">
+      <div class="cal-nav">
+        <button id="prevMonth" aria-label="Previous month">‹</button>
+        <div class="cal-month-label" id="calMonthLabel">October 2026</div>
+        <button id="nextMonth" aria-label="Next month">›</button>
+      </div>
+
+      <div class="cal-grid" id="calGrid"></div>
+
+      <div class="cal-legend">
+        <span><div class="leg-box leg-full"></div> Full</span>
+        <span><div class="leg-box leg-partial"></div> Partial</span>
+        <span><div class="leg-box leg-today"></div> Today</span>
+        <span><span class="leg-tennis">🎾</span> Tennis</span>
+      </div>
+    </div>
+
+    <div class="card" id="calDaySummary" style="display:none;">
+      <h2 id="calSummaryTitle">Selected Day</h2>
+      <div id="calSummaryContent"></div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="goToDayBtn">Open in Day Log</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== STATS VIEW ========== -->
+  <div class="view" id="view-stats">
+    <div class="card">
+      <h2>📊 Your Stats</h2>
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-value" id="streakCount">0</div>
+          <div class="stat-label">Day Streak</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="totalSessions">0</div>
+          <div class="stat-label">Sessions Logged</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="phase1Days">0</div>
+          <div class="stat-label">Phase 1 Days</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="tennisDays">0</div>
+          <div class="stat-label">Tennis Days</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📅 Recent History</h2>
+      <div class="history-list" id="historyList">
+        <div class="empty-state">No sessions logged yet.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>⚙️ Settings</h2>
+      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:12px;">
+        Data is stored only on this device. Nothing is uploaded.
+      </p>
+      <div class="btn-row">
+        <button class="btn btn-secondary" id="exportBtn">Export Backup</button>
+        <button class="btn btn-danger" id="resetBtn">Reset All Data</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>Private tracker · Data stays on this Android device only</footer>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ─── Exercises ──────────────────────────────────────────────────────────
+    const EXERCISES = [
+      { id: "iso_hold",   phase: 1, name: "Isometric Hold",   subtitle: "Pain Relief",       params: "45-sec hold · Rest 2 min · Repeat 4–5×",           skipOnTennis: false },
+      { id: "two_leg",    phase: 1, name: "Two-Legged Raise", subtitle: "Baseline Strength", params: "3 sets × 10–12 reps · 3 sec up / 3 sec down",     skipOnTennis: true  },
+      { id: "single_leg", phase: 2, name: "Single-Leg Raise", subtitle: "Advanced Strength", params: "3 sets × 10 reps · 6-sec raise · 3 days/week",    skipOnTennis: false },
+      { id: "weighted",   phase: 2, name: "Weighted Raise",   subtitle: "Tendon Remodeling", params: "3 sets × 8–10 reps · Increase weight slowly",     skipOnTennis: false }
+    ];
+
+    const STORAGE_KEY = "achillesRehabTracker_v1";
+    let data = loadData();
+    let selectedDate = todayISO();
+    let calYear, calMonth;
+
+    (function() {
+      const now = new Date();
+      calYear = now.getFullYear();
+      calMonth = now.getMonth();
+    })();
+
+    // ─── Helpers ────────────────────────────────────────────────────────────
+    function todayISO() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    function formatDisplayDate(iso) {
+      const d = new Date(iso + "T12:00:00");
+      const today = todayISO();
+      const yest = new Date(); yest.setDate(yest.getDate() - 1);
+      const yISO = yest.toISOString().slice(0, 10);
+      if (iso === today) return "Today";
+      if (iso === yISO) return "Yesterday";
+      return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+    }
+
+    function dayName(iso) {
+      return new Date(iso + "T12:00:00").toLocaleDateString(undefined, { weekday: "long" });
+    }
+
+    function loadData() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) return JSON.parse(raw);
+      } catch (e) {}
+      return { sessions: {}, phase: 1 };
+    }
+
+    function saveData() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function getSession(date) {
+      if (!data.sessions[date]) {
+        data.sessions[date] = { exercises: {}, notes: {}, tennis: false };
+      }
+      // Ensure tennis property exists for older data
+      if (data.sessions[date].tennis === undefined) data.sessions[date].tennis = false;
+      return data.sessions[date];
+    }
+
+    function sessionStatus(date) {
+      const s = data.sessions[date];
+      if (!s) return "none";
+      const done = Object.keys(s.exercises || {}).length;
+      if (done === 0) return "none";
+      // On tennis days, Two-Legged Raise is expected to be skipped
+      const isTennis = !!s.tennis;
+      const possible = (data.phase === 1 ? 2 : 4) - (isTennis && data.phase === 1 ? 1 : 0);
+      return done >= possible ? "full" : "partial";
+    }
+
+    function isTennisDay(date) {
+      const s = data.sessions[date];
+      return s && !!s.tennis;
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.classList.add("show");
+      setTimeout(() => t.classList.remove("show"), 1800);
+    }
+
+    // ─── Tabs ───────────────────────────────────────────────────────────────
+    document.querySelectorAll(".tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+        document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+        tab.classList.add("active");
+        document.getElementById("view-" + tab.dataset.view).classList.add("active");
+        if (tab.dataset.view === "calendar") renderCalendar();
+        if (tab.dataset.view === "stats") { renderStats(); renderHistory(); }
+      });
+    });
+
+    // ─── Day View ───────────────────────────────────────────────────────────
+    function renderDay() {
+      document.getElementById("dateLabel").textContent = formatDisplayDate(selectedDate);
+      document.getElementById("dayName").textContent = dayName(selectedDate);
+      document.getElementById("nextDay").disabled = selectedDate >= todayISO();
+      document.getElementById("currentPhaseLabel").textContent = "Phase " + (data.phase || 1);
+
+      const session = getSession(selectedDate);
+      const isTennis = !!session.tennis;
+
+      // Tennis toggle
+      const toggle = document.getElementById("tennisToggle");
+      toggle.classList.toggle("active", isTennis);
+
+      const list = document.getElementById("exerciseList");
+      list.innerHTML = "";
+
+      const visible = EXERCISES.filter(ex => data.phase === 1 ? ex.phase === 1 : true);
+
+      visible.forEach(ex => {
+        const done = !!session.exercises[ex.id];
+        const note = session.notes[ex.id] || "";
+        const shouldSkip = isTennis && ex.skipOnTennis;
+
+        const div = document.createElement("div");
+        div.className = "exercise" + (done ? " done" : "") + (shouldSkip ? " skipped" : "");
+        div.innerHTML = `
+          <div class="exercise-header">
+            <div>
+              <div class="exercise-title">${ex.name}</div>
+              <span class="exercise-phase">Phase ${ex.phase} · ${ex.subtitle}</span>
+            </div>
+          </div>
+          <div class="exercise-params">${ex.params}</div>
+          ${shouldSkip ? '<div class="skip-note">🎾 Suggested to skip on tennis days</div>' : ""}
+          <div class="check-row">
+            <label>
+              <input type="checkbox" data-id="${ex.id}" ${done ? "checked" : ""}>
+              Completed
+            </label>
+          </div>
+          <textarea class="notes-input" data-id="${ex.id}" placeholder="Optional note (pain, how it felt…)">${note}</textarea>
+        `;
+        list.appendChild(div);
+      });
+
+      list.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.addEventListener("change", e => {
+          const id = e.target.dataset.id;
+          const sess = getSession(selectedDate);
+          if (e.target.checked) sess.exercises[id] = true;
+          else delete sess.exercises[id];
+          saveData();
+          renderDay();
+          showToast(e.target.checked ? "Marked complete ✓" : "Unchecked");
+        });
+      });
+
+      list.querySelectorAll(".notes-input").forEach(ta => {
+        ta.addEventListener("change", e => {
+          const id = e.target.dataset.id;
+          const sess = getSession(selectedDate);
+          const val = e.target.value.trim();
+          if (val) sess.notes[id] = val;
+          else delete sess.notes[id];
+          saveData();
+        });
+      });
+    }
+
+    // Tennis toggle click
+    document.getElementById("tennisToggle").addEventListener("click", () => {
+      const sess = getSession(selectedDate);
+      sess.tennis = !sess.tennis;
+      saveData();
+      renderDay();
+      showToast(sess.tennis ? "Marked as Tennis Day 🎾" : "Tennis Day removed");
+    });
+
+    document.getElementById("prevDay").addEventListener("click", () => {
+      const d = new Date(selectedDate + "T12:00:00");
+      d.setDate(d.getDate() - 1);
+      selectedDate = d.toISOString().slice(0, 10);
+      renderDay();
+    });
+
+    document.getElementById("nextDay").addEventListener("click", () => {
+      if (selectedDate >= todayISO()) return;
+      const d = new Date(selectedDate + "T12:00:00");
+      d.setDate(d.getDate() + 1);
+      selectedDate = d.toISOString().slice(0, 10);
+      renderDay();
+    });
+
+    document.getElementById("markAllBtn").addEventListener("click", () => {
+      const sess = getSession(selectedDate);
+      const isTennis = !!sess.tennis;
+      EXERCISES
+        .filter(ex => data.phase === 1 ? ex.phase === 1 : true)
+        .filter(ex => !(isTennis && ex.skipOnTennis))
+        .forEach(ex => { sess.exercises[ex.id] = true; });
+      saveData();
+      renderDay();
+      showToast("Recommended exercises marked ✓");
+    });
+
+    document.getElementById("clearDayBtn").addEventListener("click", () => {
+      if (!confirm("Clear all exercises, notes, and tennis flag for this day?")) return;
+      data.sessions[selectedDate] = { exercises: {}, notes: {}, tennis: false };
+      saveData();
+      renderDay();
+      showToast("Day cleared");
+    });
+
+    // ─── Calendar View ──────────────────────────────────────────────────────
+    function renderCalendar() {
+      const label = new Date(calYear, calMonth, 1)
+        .toLocaleDateString(undefined, { month: "long", year: "numeric" });
+      document.getElementById("calMonthLabel").textContent = label;
+
+      const grid = document.getElementById("calGrid");
+      grid.innerHTML = "";
+
+      ["S","M","T","W","T","F","S"].forEach(d => {
+        const el = document.createElement("div");
+        el.className = "cal-dow";
+        el.textContent = d;
+        grid.appendChild(el);
+      });
+
+      const first = new Date(calYear, calMonth, 1);
+      const startDow = first.getDay();
+      const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+      const today = todayISO();
+
+      for (let i = 0; i < startDow; i++) {
+        const el = document.createElement("div");
+        el.className = "cal-day empty";
+        grid.appendChild(el);
+      }
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const iso = `${calYear}-${String(calMonth + 1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+        const status = sessionStatus(iso);
+        const tennis = isTennisDay(iso);
+
+        const el = document.createElement("button");
+        el.className = "cal-day";
+        if (iso === today) el.classList.add("today");
+        if (iso === selectedDate) el.classList.add("selected");
+        if (status === "full") el.classList.add("has-full");
+        else if (status === "partial") el.classList.add("has-partial");
+
+        let icons = "";
+        if (status !== "none") icons += '<div class="cal-dot"></div>';
+        if (tennis) icons += '<span class="cal-tennis">🎾</span>';
+
+        el.innerHTML = `<span>${day}</span><div class="cal-icons">${icons}</div>`;
+        el.addEventListener("click", () => {
+          selectedDate = iso;
+          showCalSummary(iso);
+          renderCalendar();
+        });
+        grid.appendChild(el);
+      }
+    }
+
+    function showCalSummary(iso) {
+      const box = document.getElementById("calDaySummary");
+      const title = document.getElementById("calSummaryTitle");
+      const content = document.getElementById("calSummaryContent");
+      box.style.display = "block";
+      title.textContent = formatDisplayDate(iso) + " · " + dayName(iso);
+
+      const s = data.sessions[iso];
+      const tennis = s && s.tennis;
+      let html = "";
+
+      if (tennis) {
+        html += '<p style="font-size:0.9rem;margin-bottom:8px;color:var(--tennis);font-weight:600">🎾 Tennis Day</p>';
+      }
+
+      if (!s || Object.keys(s.exercises || {}).length === 0) {
+        html += '<p style="font-size:0.9rem;color:var(--muted)">No exercises logged this day.</p>';
+      } else {
+        const done = Object.keys(s.exercises);
+        const names = done.map(id => {
+          const ex = EXERCISES.find(e => e.id === id);
+          return ex ? ex.name : id;
+        });
+        html += `
+          <p style="font-size:0.9rem;margin-bottom:6px"><strong>${names.length}</strong> exercise${names.length > 1 ? "s" : ""} completed:</p>
+          <ul style="font-size:0.85rem;margin-left:18px;color:var(--muted)">
+            ${names.map(n => `<li>${n}</li>`).join("")}
+          </ul>
+        `;
+      }
+      content.innerHTML = html;
+    }
+
+    document.getElementById("prevMonth").addEventListener("click", () => {
+      calMonth--;
+      if (calMonth < 0) { calMonth = 11; calYear--; }
+      document.getElementById("calDaySummary").style.display = "none";
+      renderCalendar();
+    });
+
+    document.getElementById("nextMonth").addEventListener("click", () => {
+      calMonth++;
+      if (calMonth > 11) { calMonth = 0; calYear++; }
+      document.getElementById("calDaySummary").style.display = "none";
+      renderCalendar();
+    });
+
+    document.getElementById("goToDayBtn").addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+      document.querySelector('.tab[data-view="day"]').classList.add("active");
+      document.getElementById("view-day").classList.add("active");
+      renderDay();
+    });
+
+    // ─── Stats ──────────────────────────────────────────────────────────────
+    function renderStats() {
+      const dates = Object.keys(data.sessions).sort().reverse();
+      let total = 0, phase1 = 0, tennisCount = 0, streak = 0;
+
+      dates.forEach(d => {
+        const s = data.sessions[d];
+        const doneCount = Object.keys(s.exercises || {}).length;
+        if (doneCount > 0) {
+          total++;
+          if (!(s.exercises["single_leg"] || s.exercises["weighted"])) phase1++;
+        }
+        if (s.tennis) tennisCount++;
+      });
+
+      const check = new Date();
+      for (let i = 0; i < 400; i++) {
+        const iso = check.toISOString().slice(0, 10);
+        const s = data.sessions[iso];
+        const has = s && Object.keys(s.exercises || {}).length > 0;
+        if (has) {
+          streak++;
+          check.setDate(check.getDate() - 1);
+        } else {
+          if (i === 0 && iso === todayISO()) {
+            check.setDate(check.getDate() - 1);
+            continue;
+          }
+          break;
+        }
+      }
+
+      document.getElementById("streakCount").textContent = streak;
+      document.getElementById("totalSessions").textContent = total;
+      document.getElementById("phase1Days").textContent = phase1;
+      document.getElementById("tennisDays").textContent = tennisCount;
+    }
+
+    function renderHistory() {
+      const list = document.getElementById("historyList");
+      const dates = Object.keys(data.sessions)
+        .filter(d => {
+          const s = data.sessions[d];
+          return Object.keys(s.exercises || {}).length > 0 || s.tennis;
+        })
+        .sort().reverse().slice(0, 40);
+
+      if (dates.length === 0) {
+        list.innerHTML = '<div class="empty-state">No sessions logged yet.</div>';
+        return;
+      }
+
+      list.innerHTML = dates.map(d => {
+        const s = data.sessions[d];
+        const done = Object.keys(s.exercises || {}).length;
+        const isTennis = !!s.tennis;
+        const possible = (data.phase === 1 ? 2 : 4) - (isTennis && data.phase === 1 ? 1 : 0);
+
+        let badgeClass = "badge-none", label = "None";
+        if (done >= possible && done > 0) { badgeClass = "badge-done"; label = "Full"; }
+        else if (done > 0) { badgeClass = "badge-partial"; label = done + " done"; }
+
+        return `
+          <div class="history-item">
+            <div>
+              <div style="font-weight:500">${formatDisplayDate(d)}</div>
+              <div style="font-size:0.75rem;color:var(--muted)">${dayName(d)}</div>
+            </div>
+            <div>
+              <span class="badge ${badgeClass}">${label}</span>
+              ${isTennis ? '<span class="badge badge-tennis">🎾</span>' : ""}
+            </div>
+          </div>`;
+      }).join("");
+    }
+
+    // ─── Settings ───────────────────────────────────────────────────────────
+    document.getElementById("exportBtn").addEventListener("click", () => {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "achilles-rehab-backup-" + todayISO() + ".json";
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast("Backup exported");
+    });
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      if (!confirm("Permanently delete ALL tracked data on this device?")) return;
+      if (!confirm("This cannot be undone. Really reset everything?")) return;
+      data = { sessions: {}, phase: 1 };
+      saveData();
+      selectedDate = todayISO();
+      renderDay();
+      renderStats();
+      renderHistory();
+      showToast("All data reset");
+    });
+
+    document.getElementById("currentPhaseLabel").addEventListener("click", () => {
+      const next = data.phase === 1 ? 2 : 1;
+      if (confirm("Switch to Phase " + next + "?\n\nOnly change when you meet the advancement guidelines from your PT plan.")) {
+        data.phase = next;
+        saveData();
+        renderDay();
+        showToast("Now in Phase " + next);
+      }
+    });
+
+    // ─── Init ───────────────────────────────────────────────────────────────
+    renderDay();
+  </script>
+</body>
+</html>
